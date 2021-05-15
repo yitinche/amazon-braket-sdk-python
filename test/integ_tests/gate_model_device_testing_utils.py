@@ -448,15 +448,31 @@ def multithreaded_bell_pair_testing(device: Device, run_kwargs: Dict[str, Any]):
         assert len(result.measurements) == shots
 
 
-def batch_bell_pair_testing(device: AwsDevice, run_kwargs: Dict[str, Any]):
+def noisy_circuit_1qubit_noise_full_probability(device: Device, run_kwargs: Dict[str, Any]):
     shots = run_kwargs["shots"]
     tol = get_tol(shots)
-    circuits = [Circuit().h(0).cnot(0, 1) for _ in range(10)]
+    circuit = Circuit().x(0).x(1).bit_flip(0, 0.1).probability()
+    result = device.run(circuit, **run_kwargs).result()
+    assert len(result.result_types) == 1
+    assert np.allclose(
+        result.get_value_by_result_type(ResultType.Probability()),
+        np.array([0.0, 0.1, 0, 0.9]),
+        **tol
+    )
 
-    batch = device.run_batch(circuits, max_parallel=5, **run_kwargs)
-    results = batch.results()
-    for result in results:
-        assert np.allclose(result.measurement_probabilities["00"], 0.5, **tol)
-        assert np.allclose(result.measurement_probabilities["11"], 0.5, **tol)
-        assert len(result.measurements) == shots
-    assert [task.result() for task in batch.tasks] == results
+
+def noisy_circuit_2qubit_noise_full_probability(device: Device, run_kwargs: Dict[str, Any]):
+    shots = run_kwargs["shots"]
+    tol = get_tol(shots)
+    K0 = np.eye(4) * np.sqrt(0.9)
+    K1 = np.kron(np.array([[0.0, 1.0], [1.0, 0.0]]), np.array([[0.0, 1.0], [1.0, 0.0]])) * np.sqrt(
+        0.1
+    )
+    circuit = Circuit().x(0).x(1).kraus((0, 1), [K0, K1]).probability()
+    result = device.run(circuit, **run_kwargs).result()
+    assert len(result.result_types) == 1
+    assert np.allclose(
+        result.get_value_by_result_type(ResultType.Probability()),
+        np.array([0.1, 0.0, 0, 0.9]),
+        **tol
+    )

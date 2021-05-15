@@ -117,14 +117,14 @@ device = AwsDevice("arn:aws:braket:::device/qpu/rigetti/Aspen-8")
 s3_folder = ("amazon-braket-Your-Bucket-Name", "RIGETTI") # Use the S3 bucket you created during onboarding
 
 bell = Circuit().h(0).cnot(0, 1)
-task = device.run(bell, s3_folder) 
+task = device.run(bell, s3_folder)
 print(task.result().measurement_counts)
 ```
 
 When you execute your task, Amazon Braket polls for a result. By default, Braket polls for 5 days; however, it is possible to change this by modifying the `poll_timeout_seconds` parameter in `AwsDevice.run`, as in the example below. Keep in mind that if your polling timeout is too short, results may not be returned within the polling time, such as when a QPU is unavailable, and a local timeout error is returned. You can always restart the polling by using `task.result()`.
 
 ```python
-task = device.run(bell, s3_folder, poll_timeout_seconds=86400)  # 1 day 
+task = device.run(bell, s3_folder, poll_timeout_seconds=86400)  # 1 day
 print(task.result().measurement_counts)
 ```
 
